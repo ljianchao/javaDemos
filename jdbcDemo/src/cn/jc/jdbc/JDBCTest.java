@@ -2,8 +2,10 @@ package cn.jc.jdbc;
 
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -56,38 +58,36 @@ public class JDBCTest {
 		} finally{
 			JDBCTools.release(rs, statement, conn);
 		}
-	}
+	}	
 	
-	/**
-	 * 通用更新方法，包括INSERT、UPDATE、DELETE
-	 */
-	public void update(String sql) {
+	@Test 
+	public void testPreparedStatement(){
 		Connection conn = null;
-		Statement statement = null;
+		//PreparedStatement是Statement的子接口
+		//可以传入带占位符的SQL语句，并且提供了补充占位符变量的方法
+		//可以有效的制止SQL注入
+		PreparedStatement ps = null;
 		
 		try {
-			conn = getConnection2();
-			statement = conn.createStatement();
-			statement.executeUpdate(sql);
+			conn = JDBCTools.getConnection();
+			//2. 准备插入的SQL语句
+			String sql = "INSERT INTO customers(name,email,birth) VALUES(?,?,?)";
+			
+			ps = conn.prepareStatement(sql);
+			
+			//索引从1开始
+			ps.setString(1, "test PreparedStatement");
+			ps.setString(2, "PreparedStatement@163.com");
+			ps.setDate(3, new Date(new java.util.Date().getTime()));
+			
+			ps.executeUpdate();
+			
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		} finally{
-			if (statement != null) {
-				try {
-					statement.close();
-				} catch (Exception e2) {
-					// TODO: handle exception
-				}
-			}
-			if (conn != null) {
-				try {
-					conn.close();
-				} catch (Exception e2) {
-					// TODO: handle exception
-				}
-			}
+			JDBCTools.release(null, ps, conn);			
 		}
-	}
+ 	}
 	
 	/**
 	 * 插入一条记录

@@ -3,6 +3,7 @@ package cn.jc.jdbc;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Properties;
@@ -13,6 +14,43 @@ import java.util.Properties;
  *
  */
 public class JDBCTools {
+	
+//	public static <T> T get(Class<T> clazz, String sql, Object...args) {
+//		T entity = null;
+//		
+//		Connection conn = null;
+//		PreparedStatement preparedStatement = null;
+//		ResultSet rs = null;
+//		
+//		try {
+//			//1. 获取connection		
+//			conn = JDBCTools.getConnection();
+//			//2. 获取Statment
+//			preparedStatement = conn.prepareStatement(sql);
+//			for (int i = 0; i < args.length; i++) {
+//				preparedStatement.setObject(i + 1, args[i]);
+//			}
+//			
+//			
+//			//4. 执行查询，得到ResultSet
+//			rs = preparedStatement.executeQuery();
+//			
+//			//5. 处理ResultSet
+//			while (rs.next()) {
+//				//利用反射创建对象
+//				entity = clazz.newInstance();
+//				
+//				//通过解析SQL语句判断到底选择哪些列，
+//			}
+//			
+//			//6. 关闭数据库资源
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} finally{
+//			JDBCTools.release(rs, preparedStatement, conn);
+//		}
+//	}
 	
 	/**
 	 * 关闭Statement, Connection
@@ -49,6 +87,63 @@ public class JDBCTools {
 				conn.close();
 			} catch (Exception e2) {
 				// TODO: handle exception
+			}
+		}
+	}
+	
+	/**
+	 * 执行SQL语句，使用PreparedStatement
+	 * @param sql
+	 * @param args：填写SQL占位符的可变参数
+	 */
+	public static void update(String sql, Object... args) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		
+		try {
+			conn = getConnection();
+			preparedStatement = conn.prepareStatement(sql);
+			
+			for (int i = 0; i < args.length; i++) {
+				preparedStatement.setObject(i + 1, args[i]);
+			}
+			
+			preparedStatement.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			release(preparedStatement, conn);
+		}
+	}
+	
+	/**
+	 * 通用更新方法，包括INSERT、UPDATE、DELETE
+	 * 采用Statement
+	 */
+	public static void update(String sql) {
+		Connection conn = null;
+		Statement statement = null;
+		
+		try {
+			conn = getConnection();
+			statement = conn.createStatement();
+			statement.executeUpdate(sql);
+		} catch (Exception e) {
+			// TODO: handle exception
+		} finally{
+			if (statement != null) {
+				try {
+					statement.close();
+				} catch (Exception e2) {
+					// TODO: handle exception
+				}
+			}
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (Exception e2) {
+					// TODO: handle exception
+				}
 			}
 		}
 	}
