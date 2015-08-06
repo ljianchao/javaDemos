@@ -36,7 +36,10 @@ public class DAOTest {
 
 	@Test
 	public void testGetForValue() {
-		fail("Not yet implemented");
+		String sql = "SELECT name FROM customers WHERE id > ?";
+		
+		String name = dao.getForValue(sql, 2);
+		System.out.println(name);
 	}
 
 }
