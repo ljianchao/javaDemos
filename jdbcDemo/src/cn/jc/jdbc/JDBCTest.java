@@ -7,13 +7,83 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.junit.Test;
 
 public class JDBCTest {
+	
+	/**
+	 * ResultSetMetaData是描述ResultSet的元数据对象，可以获取到结果集中的的列名、列值等信息
+	 */
+	@Test
+	public void testResultSetMetaData() {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		try {
+			//1. 获取connection		
+			conn = JDBCTools.getConnection();
+			String sql = "SELECT * FROM customers where id = ?";
+			//2. 获取Statment
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setInt(1, 1);
+			
+			
+			Map<String, Object> values = new HashMap<String, Object>();
+			
+			//执行查询，得到ResultSet
+			rs = preparedStatement.executeQuery();
+			
+			//获取ResultSetMetaData对象
+			ResultSetMetaData rsmd = rs.getMetaData();
+			while (rs.next()) {
+				//打印每一列的列名
+				for (int i = 0; i < rsmd.getColumnCount(); i++) {
+					String columnLabel = rsmd.getColumnLabel(i+1);
+					Object columnValue = rs.getObject(columnLabel);
+					
+					values.put(columnLabel, columnValue);
+				}
+				
+			}
+			
+			//System.out.println(values);		
+			
+			Class clazz = Customer.class;
+			
+			Object customer = clazz.newInstance();
+			
+			for (Map.Entry<String, Object> entry : values.entrySet()) {
+				String fieldName = entry.getKey();
+				Object fieldValue = entry.getValue();
+				
+				System.out.println(fieldName + ":" + fieldValue);
+			}
+			
+			//6. 关闭数据库资源
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(rs, preparedStatement, conn);
+		}
+	}
+	
+	@Test
+	public void testGet() {
+		String sql = "SELECT * FROM customers where id = ?";
+		Customer customer = JDBCTools.get(Customer.class, sql, 1);
+		
+		System.out.println(customer);
+	}
 	
 	/**
 	 * ResultSet：结果集，封装了使用JDBC进行查询的结果

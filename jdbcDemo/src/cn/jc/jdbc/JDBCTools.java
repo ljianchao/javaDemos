@@ -5,7 +5,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -15,42 +18,65 @@ import java.util.Properties;
  */
 public class JDBCTools {
 	
-//	public static <T> T get(Class<T> clazz, String sql, Object...args) {
-//		T entity = null;
-//		
-//		Connection conn = null;
-//		PreparedStatement preparedStatement = null;
-//		ResultSet rs = null;
-//		
-//		try {
-//			//1. 获取connection		
-//			conn = JDBCTools.getConnection();
-//			//2. 获取Statment
-//			preparedStatement = conn.prepareStatement(sql);
-//			for (int i = 0; i < args.length; i++) {
-//				preparedStatement.setObject(i + 1, args[i]);
-//			}
-//			
-//			
-//			//4. 执行查询，得到ResultSet
-//			rs = preparedStatement.executeQuery();
-//			
-//			//5. 处理ResultSet
-//			while (rs.next()) {
-//				//利用反射创建对象
-//				entity = clazz.newInstance();
-//				
-//				//通过解析SQL语句判断到底选择哪些列，
-//			}
-//			
-//			//6. 关闭数据库资源
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} finally{
-//			JDBCTools.release(rs, preparedStatement, conn);
-//		}
-//	}
+	public static <T> T get(Class<T> clazz, String sql, Object...args) {
+		T entity = null;
+		
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		try {
+			//1. 获取connection		
+			conn = JDBCTools.getConnection();
+			//2. 获取Statment
+			preparedStatement = conn.prepareStatement(sql);
+			for (int i = 0; i < args.length; i++) {
+				preparedStatement.setObject(i + 1, args[i]);
+			}
+			
+			
+			//4. 执行查询，得到ResultSet
+			rs = preparedStatement.executeQuery();
+			
+			// 得到ResultSetMetaData对象
+			ResultSetMetaData rsmd = rs.getMetaData();
+			
+			// 创建Map<Sting, Object>对象
+			Map<String, Object> values = new HashMap<String, Object>();
+			//5. 处理ResultSet
+			if (rs.next()) {
+				//利用反射创建对象
+				entity = clazz.newInstance();
+				for (int i = 0; i < rsmd.getColumnCount(); i++) {
+					String columnLabel =rsmd.getColumnLabel(i + 1);
+					Object columnValue = rs.getObject(i + 1);
+					
+					values.put(columnLabel, columnValue);
+				}
+				
+				//通过解析SQL语句判断到底选择哪些列，以及需要为entity对象的哪些属性赋值				
+			}
+			
+			if (values.size() > 0) {
+				entity = clazz.newInstance();
+				
+				for (Map.Entry<String, Object> entry : values.entrySet()) {
+					String fieldName = entry.getKey();
+					Object value = entry.getValue();
+					
+					ReflectionUtils.setFieldValue(entity, fieldName, value);
+				}
+			}
+			
+			//6. 关闭数据库资源
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(rs, preparedStatement, conn);
+		}
+		return entity;
+	}
 	
 	/**
 	 * 关闭Statement, Connection
