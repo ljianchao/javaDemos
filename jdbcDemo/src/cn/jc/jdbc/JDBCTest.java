@@ -1,6 +1,10 @@
 package cn.jc.jdbc;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Driver;
@@ -18,6 +22,126 @@ import java.util.Properties;
 import org.junit.Test;
 
 public class JDBCTest {
+	
+	/**
+	 * 读取blob数据
+	 * 1. 使用getBlob方法读取到Blob对象
+	 * 2. 调用Blob的getBinaryStream()方法得到输入流。再使用IO操作
+	 */
+	@Test
+	public void readBlob() {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		try {
+			//1. 获取connection		
+			conn = JDBCTools.getConnection();
+			String sql = "SELECT * FROM customers where id = ?";
+			//2. 获取Statment
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setInt(1, 9);
+			
+			//执行查询，得到ResultSet
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()) {
+				int id = rs.getInt(1);
+				String name = rs.getString(2);
+				String email = rs.getString(3);
+				
+				System.out.println(id + "," + name + "," + email);
+				
+				Blob picture = rs.getBlob(5);
+				InputStream in = picture.getBinaryStream();
+				OutputStream out = new FileOutputStream("out.jpg");
+				byte[] buffer = new byte[1024];
+				int len = 0;
+				while ((len = in.read(buffer)) != -1) {
+					out.write(buffer, 0, len);					
+				}
+				
+				out.close();
+				
+			}
+
+			//6. 关闭数据库资源
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(rs, preparedStatement, conn);
+		}
+	}
+	
+	/**
+	 * 插入BLOB类型的数据必须使用PreparedStatement，因为BLOG类型的数据无法使用字符串拼接
+	 * 
+	 * 调用setBlob(int index, InputStream inputStream)
+	 */
+	@Test
+	public void testInsertBlob(){
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+		
+		try {
+			connection = JDBCTools.getConnection();
+			String sql = "INSERT INTO customers(name,email,birth,picture) VALUES(?,?,?,?)";
+			
+			//使用重载的prepareStatement(sql,flag)
+			preparedStatement = connection.prepareStatement(sql);
+			
+			//索引从1开始
+			preparedStatement.setString(1, "testBLOB");
+			preparedStatement.setString(2, "PreparedStatement@163.com");
+			preparedStatement.setDate(3, new Date(new java.util.Date().getTime()));
+			InputStream inputStream = new FileInputStream("7.jpg");
+			preparedStatement.setBlob(4, inputStream);
+			
+			preparedStatement.executeUpdate();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(null, preparedStatement, connection);
+		}
+	}
+	
+	/**
+	 * 获取数据库自动生成的主键
+	 */
+	@Test
+	public void testGetKeyValue() {
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+		
+		try {
+			connection = JDBCTools.getConnection();
+			String sql = "INSERT INTO customers(name,email,birth) VALUES(?,?,?)";
+			
+			//使用重载的prepareStatement(sql,flag)
+			preparedStatement = connection.prepareStatement(sql,
+					Statement.RETURN_GENERATED_KEYS);
+			
+			//索引从1开始
+			preparedStatement.setString(1, "getKey");
+			preparedStatement.setString(2, "PreparedStatement@163.com");
+			preparedStatement.setDate(3, new Date(new java.util.Date().getTime()));
+			
+			preparedStatement.executeUpdate();
+			
+			//获取新生成的主键的ResultSet
+			ResultSet resultSet = preparedStatement.getGeneratedKeys();
+			if (resultSet.next()) {
+				System.out.println(resultSet.getObject(1));
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(null, preparedStatement, connection);
+		}
+	}
 	
 	/**
 	 * ResultSetMetaData是描述ResultSet的元数据对象，可以获取到结果集中的的列名、列值等信息
