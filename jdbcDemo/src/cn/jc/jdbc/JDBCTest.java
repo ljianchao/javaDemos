@@ -1,5 +1,6 @@
 package cn.jc.jdbc;
 
+import java.beans.PropertyVetoException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -19,9 +20,216 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import javax.sql.DataSource;
+
+import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.dbcp.BasicDataSourceFactory;
 import org.junit.Test;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
 public class JDBCTest {
+	
+	/**
+	 * 测试c3p0数据库连接池（配置文件）
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testC3P0WithConfigFile() throws SQLException {
+		DataSource dataSource = new ComboPooledDataSource("helloc3p0");
+		
+		System.out.println(dataSource.getConnection());
+		
+		ComboPooledDataSource comboPooledDataSource = (ComboPooledDataSource)dataSource;
+		System.out.println(comboPooledDataSource.getMaxPoolSize());
+	}
+	
+	/**
+	 * 测试c3p0数据库连接池
+	 * @throws PropertyVetoException 
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testC3P0() throws PropertyVetoException, SQLException {
+		ComboPooledDataSource cpds = new ComboPooledDataSource();
+		cpds.setDriverClass("com.mysql.jdbc.Driver");
+		cpds.setJdbcUrl("jdbc:mysql://localhost:3306/demo");
+		cpds.setUser("root");
+		cpds.setPassword("root");
+		
+		System.out.println(cpds.getConnection());
+	}
+	
+	/**
+	 * 测试DataSourceFactory
+	 * @throws Exception
+	 */
+	@Test
+	public void testDBCPWithDataSourceFactory() throws Exception {
+		Properties properties = new Properties();
+		InputStream inputStream = JDBCTest.class.getClassLoader().
+				getResourceAsStream("dbcp.properties");
+		properties.load(inputStream);
+		DataSource dataSource = BasicDataSourceFactory.createDataSource(properties);
+		
+		System.out.println(dataSource.getConnection());
+		
+//		BasicDataSource basicDataSource = (BasicDataSource)dataSource;
+//		
+//		System.out.println(basicDataSource.getMaxWait());
+	}
+	
+	/**
+	 * 使用DBCP数据库连接池
+	 * 依赖于：commons-pool.jar
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testDBCP() throws SQLException {
+		BasicDataSource dataSource = null;
+		//创建DBCP数据源实例
+		dataSource = new BasicDataSource();
+		
+		//2. 为数据库实例指定必须的属性
+		dataSource.setUsername("root");
+		dataSource.setPassword("root");
+		dataSource.setUrl("jdbc:mysql://localhost:3306/demo");
+		dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+		
+		//3. 指定数据源的一些可选的属性
+		dataSource.setInitialSize(10);	//指定连接数
+		dataSource.setMaxActive(50);	//最大连接数，同一时刻可以想数据库申请的连接数
+		dataSource.setMinIdle(5);	//在数据库空闲状态下，连接池中最少有多少个连接
+		dataSource.setMaxWait(1000 * 5);	//等待数据库连接池分配连接的最长时间，单位毫秒，超时将抛异常
+		
+		//4. 从数据源中获取数据库连接
+		Connection connection = dataSource.getConnection();
+		System.out.println(connection);
+		
+		
+	}
+	
+	/**
+	 * 使用batch批量插入
+	 */
+	@Test
+	public void batch() {
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+		String sql = null;
+		
+		try {
+			connection = JDBCTools.getConnection();
+			sql = "INSERT INTO customers VALUES(?,?)";
+			JDBCTools.beginTx(connection);
+			
+			preparedStatement = connection.prepareStatement(sql);
+			
+			long begin = System.currentTimeMillis();
+			for (int i = 0; i < 100000; i++) {
+				preparedStatement.setInt(1, i+1);
+				preparedStatement.setString(2, "name_" + i);
+				
+				//累计SQL语句
+				preparedStatement.addBatch();
+				//累计300执行1次，并清空先前累计SQL
+				if ((i + 1) % 300 == 0) {
+					preparedStatement.executeBatch();
+					preparedStatement.clearBatch();
+				}
+			}
+			
+			if (100000 % 300 != 0) {
+				preparedStatement.executeBatch();
+				preparedStatement.clearBatch();
+			}
+			
+			long end = System.currentTimeMillis();
+			
+			System.out.println("Time:" + (end - begin));
+			
+			JDBCTools.commite(connection);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(preparedStatement, connection);
+		}
+	}
+	
+	/**
+	 * preparedStatement批量插入
+	 */
+	@Test
+	public void testBatchWithPreparedStatement() {
+		Connection connection = null;
+		PreparedStatement preparedStatement = null;
+		String sql = null;
+		
+		try {
+			connection = JDBCTools.getConnection();
+			sql = "INSERT INTO customers VALUES(?,?)";
+			JDBCTools.beginTx(connection);
+			
+			preparedStatement = connection.prepareStatement(sql);
+			
+			long begin = System.currentTimeMillis();
+			for (int i = 0; i < 100000; i++) {
+				preparedStatement.setInt(1, i+1);
+				preparedStatement.setString(2, "name_" + i);
+				
+				preparedStatement.executeUpdate();
+			}
+			long end = System.currentTimeMillis();
+			
+			System.out.println("Time:" + (end - begin));
+			
+			JDBCTools.commite(connection);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(preparedStatement, connection);
+		}
+	}
+	
+	/**
+	 * 向Oracle的customers数据表中插入10W条记录
+	 * 测试如何用时最短
+	 * statement批量插入
+	 */
+	@Test
+	public void testBatchWithStatement() {
+		Connection connection = null;
+		Statement statement = null;
+		String sql = null;
+		
+		try {
+			connection = JDBCTools.getConnection();
+			JDBCTools.beginTx(connection);
+			
+			statement = connection.createStatement();
+			
+			long begin = System.currentTimeMillis();
+			for (int i = 0; i < 100000; i++) {
+				sql = "INSERT INTO customers VALUES("+(i + 1)+",'name_"+ i+")";
+				statement.executeUpdate(sql);
+			}
+			long end = System.currentTimeMillis();
+			
+			System.out.println("Time:" + (end - begin));
+			
+			JDBCTools.commite(connection);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			JDBCTools.release(statement, connection);
+		}
+	}
 	
 	/**
 	 * 读取blob数据

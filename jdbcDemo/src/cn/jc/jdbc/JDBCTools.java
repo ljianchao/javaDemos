@@ -6,10 +6,15 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.sql.DataSource;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * 操作jdbc的方法
@@ -17,6 +22,97 @@ import java.util.Properties;
  *
  */
 public class JDBCTools {
+	
+	private static DataSource dataSource = null;
+	
+	//数据库连接池应只被初始化一次
+	static{
+		dataSource =new ComboPooledDataSource("helloc3p0");
+	}
+	
+	/**
+	 * 提交事务
+	 * @param connection
+	 */
+	public static void commite(Connection connection) {
+		if (connection != null) {
+			try {
+				connection.commit();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * 回滚事务
+	 * @param connection
+	 */
+	public static void rollback(Connection connection) {
+		if(connection != null){
+			try {
+				connection.rollback();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * 开始事务
+	 * @param connection
+	 */
+	public static void beginTx(Connection connection) {
+		if (connection != null) {
+			try {
+				connection.setAutoCommit(false);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * DriverManager 驱动管理类
+	 * 1). 可以通过重载的getConnection()方法获取数据库连接，较为方便
+	 * 2). 可以同时管理多个驱动程序: 若注册了多个数据库连接，则调用getConnection()
+	 * 方法时传入的参数不同，即返回不同的数据库连接
+	 */
+	public static Connection getConnection() throws Exception {
+		//1. 准备数据库连接的4个字符串
+		String driverClass = null;
+		String jdbcUrl = null;
+		String user = null;
+		String password = null;
+		//读取类路径下的jdbc.properties文件
+		InputStream inputStream = JDBCTools.class.getClassLoader().getResourceAsStream("jdbc.properties");
+		Properties properties = new Properties();
+		properties.load(inputStream);
+		driverClass = properties.getProperty("driver");
+		jdbcUrl = properties.getProperty("jdbcUrl");
+		user = properties.getProperty("user");
+		password = properties.getProperty("password");
+		
+		//2. 加载数据库驱动程序(注册驱动)
+		//mysql的Driver中的静态构造函数中已注册，所以不需显示注册
+		//DriverManager.registerDriver((Driver)Class.forName(driverClass).newInstance());
+		Class.forName(driverClass);
+		
+		//3. 通过DriverManager的getConnection()方法获取数据库连接
+		Connection connection = DriverManager.getConnection(jdbcUrl, user, password);
+		//System.out.println(connection);
+		return connection;
+	}
+	
+	/**
+	 * 数据库连接池获取数据源
+	 */
+	public static Connection getConnectionByPool() throws Exception {		
+		return dataSource.getConnection();
+	}
 	
 	public static <T> T get(Class<T> clazz, String sql, Object...args) {
 		T entity = null;
@@ -110,6 +206,8 @@ public class JDBCTools {
 		}
 		if (conn != null) {
 			try {
+				//数据库连接池的Connection对象进行close时，
+				//并不是真的进行关闭，而是把该连接归还到数据库连接池中
 				conn.close();
 			} catch (Exception e2) {
 				// TODO: handle exception
@@ -174,35 +272,5 @@ public class JDBCTools {
 		}
 	}
 	
-	/**
-	 * DriverManager 驱动管理类
-	 * 1). 可以通过重载的getConnection()方法获取数据库连接，较为方便
-	 * 2). 可以同时管理多个驱动程序: 若注册了多个数据库连接，则调用getConnection()
-	 * 方法时传入的参数不同，即返回不同的数据库连接
-	 */
-	public static Connection getConnection() throws Exception {
-		//1. 准备数据库连接的4个字符串
-		String driverClass = null;
-		String jdbcUrl = null;
-		String user = null;
-		String password = null;
-		//读取类路径下的jdbc.properties文件
-		InputStream inputStream = JDBCTools.class.getClassLoader().getResourceAsStream("jdbc.properties");
-		Properties properties = new Properties();
-		properties.load(inputStream);
-		driverClass = properties.getProperty("driver");
-		jdbcUrl = properties.getProperty("jdbcUrl");
-		user = properties.getProperty("user");
-		password = properties.getProperty("password");
-		
-		//2. 加载数据库驱动程序(注册驱动)
-		//mysql的Driver中的静态构造函数中已注册，所以不需显示注册
-		//DriverManager.registerDriver((Driver)Class.forName(driverClass).newInstance());
-		Class.forName(driverClass);
-		
-		//3. 通过DriverManager的getConnection()方法获取数据库连接
-		Connection connection = DriverManager.getConnection(jdbcUrl, user, password);
-		//System.out.println(connection);
-		return connection;
-	}
+	
 }
