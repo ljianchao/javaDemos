@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Blob;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.Driver;
@@ -15,9 +16,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -29,6 +30,36 @@ import org.junit.Test;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class JDBCTest {
+	
+	/**
+	 * 测试存储过程
+	 */
+	@Test
+	public void testCallableStatement() {
+		Connection connection = null;
+		CallableStatement callableStatement = null;
+		try {
+			connection = JDBCTools.getConnection();
+			String sql = "{?= call sum_salary[(?,?)]}";
+			callableStatement = connection.prepareCall(sql);
+			//注册out参数
+			callableStatement.registerOutParameter(1, Types.NUMERIC);
+			callableStatement.registerOutParameter(3, Types.NUMERIC);
+			// 赋值in参数
+			callableStatement.setInt(2, 80);
+			
+			callableStatement.execute();
+			
+			//获取返回值
+			double sumSalary = callableStatement.getDouble(1);
+			double empCount = callableStatement.getDouble(3);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			JDBCTools.release(null, callableStatement, connection);
+		}
+	}
 	
 	/**
 	 * 测试c3p0数据库连接池（配置文件）
@@ -275,7 +306,7 @@ public class JDBCTest {
 
 			//6. 关闭数据库资源
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+ 
 			e.printStackTrace();
 		} finally{
 			JDBCTools.release(rs, preparedStatement, conn);

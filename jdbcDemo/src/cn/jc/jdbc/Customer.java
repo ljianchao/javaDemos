@@ -3,6 +3,18 @@ package cn.jc.jdbc;
 import java.sql.Date;
 
 public class Customer {
+	public Customer() {
+		
+	}
+	
+	public Customer(int id, String name, String email, Date birth) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.birth = birth;
+	}
+
 	private int id;
 	private String name;
 	private String email;

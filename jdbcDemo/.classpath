@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="lib/commons-dbcp-1.4.jar" sourcepath="G:/资源/课件程序/java/OpenSource/dbcp/commons-dbcp-1.4-src.zip"/>
 	<classpathentry kind="lib" path="lib/commons-pool-1.6.jar"/>
 	<classpathentry kind="lib" path="lib/c3p0-0.9.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbutils-1.6.jar" sourcepath="G:/资源/课件程序/java/OpenSource/dbutils/commons-dbutils-1.6-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
