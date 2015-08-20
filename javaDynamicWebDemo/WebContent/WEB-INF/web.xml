@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
+	<display-name>javaDynamicWebDemo</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+	
+	<!-- 配置当前WEB应用的初始化参数 -->
+	<context-param>
+		<param-name>driver</param-name>
+		<param-value>com.mysql.jdbc.Driver</param-value>
+	</context-param>
+	
+	<context-param>
+		<param-name>jdbcUrl</param-name>
+		<param-value>jdbc:mysql://localhost:3306/demo</param-value>
+	</context-param>
+	
+	<!-- 配置和映射Servlet -->
+	<servlet>
+		<!-- Servlet注册的名字 -->
+		<servlet-name>helloServlet</servlet-name>
+		<!-- Servlet的全类名 -->
+		<servlet-class>cn.jc.javaweb.HelloServlet</servlet-class>
+		
+		<!-- 配置Servlet的初始化参数。且节点必须在 load-on-startup节点的前面-->
+		<init-param>
+			<param-name>user</param-name>
+			<param-value>root</param-value>
+		</init-param>
+		<init-param>
+			<param-name>password</param-name>
+			<param-value>1230</param-value>
+		</init-param>
+		
+		<!-- 指定Servlet创建的时期 -->
+		<load-on-startup>5</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>helloServlet</servlet-name>
+		<url-pattern>/hello</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<!-- Servlet注册的名字 -->
+		<servlet-name>secondServlet</servlet-name>
+		<!-- Servlet的全类名 -->
+		<servlet-class>cn.jc.javaweb.SecondServlet</servlet-class>
+		<!-- 指定Servlet创建的时期，非 负数起作用-->
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	
+	<servlet>
+		<servlet-name>loginServlet</servlet-name>
+		<servlet-class>cn.jc.javaweb.LoginServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>loginServlet</servlet-name>
+		<url-pattern>/loginServlet</url-pattern>
+	</servlet-mapping>
+</web-app>
