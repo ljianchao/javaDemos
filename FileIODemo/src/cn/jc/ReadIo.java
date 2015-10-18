@@ -21,7 +21,7 @@ import org.junit.Test;
  *
  */
 public class ReadIo {
-	private String FileName = "rgw_access.log-20150809";
+	private String FileName = "rgw_access.log";
 	
 	/**
 	 * 读取行

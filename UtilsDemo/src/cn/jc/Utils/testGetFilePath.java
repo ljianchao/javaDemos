@@ -38,10 +38,15 @@ public class testGetFilePath {
 		System.out.println(java.net.URLDecoder.decode(picUrl.getPath(), "utf-8"));
 		
 		//5. 获取当前工程路径
-		System.out.println(System.getProperty("user.dir"));
+		System.out.println("user.dir: " + System.getProperty("user.dir"));
 		
 		//6. 获取当前工程的类路径
 		System.out.println(System.getProperty("java.class.path"));
+		
+		System.out.println("separator: " + File.separator);
+		System.out.println("separatorChar: " + File.separatorChar);
+		System.out.println("pathSeparator: " + File.pathSeparator);
+		System.out.println("pathSeparatorChar" + File.pathSeparatorChar);
 	}
 		
 }

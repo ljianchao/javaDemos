@@ -4,5 +4,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.4.jar" sourcepath="G:/资源/课件程序/java/OpenSource/commons-io/commons-io-2.4-src.zip"/>
+	<classpathentry kind="lib" path="lib/commons-configuration-1.10.jar" sourcepath="G:/资源/课件程序/java/OpenSource/apache-commons/commons-configuration/commons-configuration-1.10-src.zip"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
