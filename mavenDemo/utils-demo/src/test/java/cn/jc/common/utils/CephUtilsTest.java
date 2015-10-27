@@ -36,6 +36,22 @@ public class CephUtilsTest {
 	}
 	
 	@Test
+	public void testReplace() {
+		try {
+			String str = "E:\\texstbucekt2\\sql.txt";
+			String replaceStr =  "E:\\texstbucekt2\\";
+			
+			int first = str.indexOf(replaceStr);
+			if (first != -1) {
+				str = str.substring(replaceStr.length() - 1, str.length());
+			}
+			System.out.println(str);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+	
+	@Test
 	public void testGetOwnedBuckets() {
 		List<Bucket> buckets = CephUtils.getOwnedBuckets();
 		if (buckets != null && buckets.size() > 0) {
@@ -80,11 +96,12 @@ public class CephUtilsTest {
 				System.out.println(objectSummary.getKey() + "\t" +
 			objectSummary.getSize() + "\t" + StringUtils.fromDate(objectSummary.getLastModified()));
 			}
+			
 		} while (objects.isTruncated());
 	}
 
 	@Test
-	public void testCreateObjectStringStringInputStreamObjectMetadata() {
+	public void testCreateObjectStringStringInputStreamObjectMetadata() throws IOException {
 		String bucketName = "testbucket3";
 		String key = "hello.txt";
 		ByteArrayInputStream input = new ByteArrayInputStream("Swicth Hello World!".getBytes());
@@ -92,6 +109,10 @@ public class CephUtilsTest {
 			CephUtils.createObject(bucketName, key, input, new ObjectMetadata());
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally{
+			if (input != null) {
+				input.close();
+			}
 		}
 	}
 
