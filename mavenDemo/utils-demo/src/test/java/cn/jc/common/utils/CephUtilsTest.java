@@ -3,10 +3,12 @@ package cn.jc.common.utils;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import org.junit.Test;
 
@@ -38,13 +40,14 @@ public class CephUtilsTest {
 	@Test
 	public void testReplace() {
 		try {
-			String str = "E:\\texstbucekt2\\sql.txt";
+			String str = "test1/te/2.txt";
 			String replaceStr =  "E:\\texstbucekt2\\";
 			
-			int first = str.indexOf(replaceStr);
-			if (first != -1) {
-				str = str.substring(replaceStr.length() - 1, str.length());
-			}
+//			int first = str.indexOf(replaceStr);
+//			if (first != -1) {
+//				str = str.substring(replaceStr.length() - 1, str.length());
+//			}
+			str = str.replace('/', File.separatorChar);
 			System.out.println(str);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -150,6 +153,18 @@ public class CephUtilsTest {
 			S3Object s3Object = CephUtils.getS3Object(bucketName, key);
 			InputStream in = s3Object.getObjectContent();
 			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testGetS3ObjectMetadata() {
+		String bucketName = "mplus";
+		String key = "";
+		ObjectMetadata objectMetadata = null;
+		try {
+			objectMetadata = CephUtils.getS3ObjectMetadata(bucketName, key);						
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
