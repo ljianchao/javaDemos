@@ -21,6 +21,7 @@ import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 
 public class CephUtils {
@@ -74,15 +75,23 @@ public class CephUtils {
 		}
 		
 		//初始化AmazonS3
-		getClientConn(protocol);
-	}		
+		setClientConn(protocol);
+	}	
+	
+	/***
+	 * GET A CONNECTION
+	 * @return
+	 */
+	public static AmazonS3 getClientConn() {
+		return conn;
+	}
 	
 	/**
 	 * create a connection
 	 * @return
 	 * @throws IOException 
 	 */
-	private static void getClientConn(Protocol protocol) throws IOException{
+	private static void setClientConn(Protocol protocol) throws IOException{
 		if (CephUtils.accessKey == null || CephUtils.accessKey.isEmpty()) {
 			 throw new NullPointerException("accessKey为null");
 		}
@@ -174,7 +183,7 @@ public class CephUtils {
 	}
 		
 	/**
-	 * CREATING AN OBJECT
+	 * CREATING AN OBJECT WITH METADATA
 	 * @param bucketName
 	 * @param key
 	 * @param input
@@ -197,6 +206,22 @@ public class CephUtils {
 			throw new NullPointerException("ceph连接为null");
 		}
 		conn.putObject(bucketName, key, file);
+	}
+	
+	/**
+	 * CREATING AN OBJECT
+	 * @param bucketName
+	 * @param key
+	 * @param file
+	 */
+	public static void createObject(String bucketName, String key, File file, ObjectMetadata metadata) {
+		if (conn == null) {
+			throw new NullPointerException("ceph连接为null");
+		}
+		PutObjectRequest preq = new PutObjectRequest(bucketName, key, file);
+		preq.setMetadata(metadata);
+		
+		conn.putObject(preq);
 	}
 	
 	/**
@@ -272,6 +297,19 @@ public class CephUtils {
 		}else {
 			return s3Object.getObjectContent();
 		}
+	}
+	
+	/**
+	 * GET THE METADATA OF S3OBJECT
+	 * @param bucketName
+	 * @param key
+	 * @return
+	 */
+	public static ObjectMetadata getS3ObjectMetadata(String bucketName, String key){
+		if (conn == null) {
+			throw new NullPointerException("ceph连接为null");
+		}
+		return conn.getObjectMetadata(bucketName, key);
 	}
 	
 	/**
